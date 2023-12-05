@@ -1,0 +1,49 @@
+{
+	"extends": [
+		"eslint:recommended",
+		"plugin:prettier/recommended",
+		"plugin:@typescript-eslint/recommended"
+	],
+	"parser": "@typescript-eslint/parser",
+	"env": {
+		"node": true,
+		"browser": true,
+		"es2021": true,
+		"jest": true
+	},
+	"parserOptions": {
+		"ecmaFeatures": {
+			"jsx": true
+		},
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"plugins": ["@typescript-eslint"],
+	"ignorePatterns": [
+		"!.*",
+		"dist",
+		"node_modules",
+		"src/test",
+		"__tests__",
+		"__mocks__",
+		"jest.config.js"
+	],
+	"rules": {
+		"@typescript-eslint/no-unused-vars": "error",
+		"prettier/prettier": [
+			"error",
+			{
+				"endOfLine": "auto"
+			}
+		],
+		"@typescript-eslint/no-namespace": "off"
+	},
+	"overrides": [
+		{
+			"files": ["src/**/*.type.ts"],
+			"rules": {
+				"@typescript-eslint/no-explicit-any": "off"
+			}
+		}
+	]
+}

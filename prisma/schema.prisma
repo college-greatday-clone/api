@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  GreatDayAdmin
+  HRManager
+  User
+  Public
+}
+
+enum CompanyApprovalStatusType {
+  Pending
+  InProgress
+  Revise
+  Revised
+  Approved
+  Declined
+}
+
+enum AttendanceApprovalStatusType {
+  Pending
+  Rejected
+  Approved
+}
+
+enum AttendanceType {
+  ClockIn
+  ClockOut
+}
+
+enum WorkType {
+  WorkFromHome
+  WorkFromOffice
+}
+
+enum WorkingHourType {
+  EightToFive
+  NineToEight
+}
+
+model Position {
+  id           String        @id @default(uuid())
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  companyUsers CompanyUser[]
+
+  @@map("positions")
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  name                String
+  email               String                @unique
+  password            String
+  role                RoleType
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  requestedCompanies  Company[]
+  companyApprovalLogs CompanyApprovalLogs[]
+  companyUsers        CompanyUser[]
+  Attendance          Attendance[]
+
+  @@map("users")
+}
+
+model Company {
+  id                  String                @id @default(uuid())
+  name                String
+  code                String                @unique
+  city                String
+  email               String                @unique
+  capacity            Int
+  phoneNumber         String
+  requestorId         String
+  requestor           User                  @relation(fields: [requestorId], references: [id])
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  companyApprovalLogs CompanyApprovalLogs[]
+  companyUsers        CompanyUser[]
+
+  @@map("companies")
+}
+
+model CompanyUser {
+  id          String          @id @default(uuid())
+  workType    WorkType
+  workingHour WorkingHourType
+  phoneNumber String
+  address     String
+  isPic       Boolean         @default(false)
+  positionId  String
+  position    Position        @relation(fields: [positionId], references: [id])
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // For PiC
+  companyUserControls CompanyUserPersonInCharge[] @relation("companyUserControl")
+
+  // For General User
+  companyPersonInCharges CompanyUserPersonInCharge[] @relation("companyUserPersonInCharge")
+  Attendance             Attendance[]
+
+  @@map("companyUsers")
+}
+
+model CompanyUserPersonInCharge {
+  id                          String      @id @default(uuid())
+  companyUserId               String
+  companyUser                 CompanyUser @relation("companyUserControl", fields: [companyUserId], references: [id])
+  companyUserPersonInChargeId String
+  companyUserPersonInCharge   CompanyUser @relation("companyUserPersonInCharge", fields: [companyUserPersonInChargeId], references: [id])
+  createdAt                   DateTime    @default(now())
+
+  @@map("companyUserPersonInCharges")
+}
+
+model CompanyApprovalLogs {
+  id          String                     @id @default(uuid())
+  status      CompanyApprovalStatusType?
+  files       Json                       @default("[]")
+  remark      String?
+  companyId   String
+  company     Company                    @relation(fields: [companyId], references: [id])
+  createdById String
+  createdBy   User                       @relation(fields: [createdById], references: [id])
+  createdAt   DateTime                   @default(now())
+
+  @@map("companyApprovalLogs")
+}
+
+model Attendance {
+  id                  String               @id @default(uuid())
+  clockIn             DateTime
+  clockOut            DateTime?
+  isLateClockIn       Boolean              @default(false)
+  isLateClockOut      Boolean              @default(false)
+  companyUserId       String
+  createdBy           CompanyUser          @relation(fields: [companyUserId], references: [id])
+  createdAt           DateTime             @default(now())
+  userId              String?
+  user                User?                @relation(fields: [userId], references: [id])
+  attendanceApprovals AttendanceApproval[]
+
+  @@map("attendances")
+}
+
+model AttendanceApproval {
+  id           String                       @id @default(uuid())
+  attendanceId String
+  attendance   Attendance                   @relation(fields: [attendanceId], references: [id])
+  type         AttendanceType
+  status       AttendanceApprovalStatusType
+  createdAt    DateTime                     @default(now())
+
+  @@map("attendanceApprovals")
+}
