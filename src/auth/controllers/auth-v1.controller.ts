@@ -236,7 +236,33 @@ export class AuthControllerV1 {
 	me = async (req: Request, res: Response) => {
 		// Find current user
 		const user = await prisma.user.findFirst({
-			where: { id: req.currentUser?.id as string }
+			where: { id: req.currentUser?.id as string },
+			include: {
+				companyUsers: {
+					select: {
+						id: true,
+						workType: true,
+						workingHour: true,
+						phoneNumber: true,
+						address: true,
+						isPic: true,
+						position: {
+							select: {
+								id: true,
+								name: true
+							}
+						},
+						company: {
+							select: {
+								id: true,
+								name: true
+							}
+						},
+						companyUserControls: true,
+						companyPersonInCharges: true
+					}
+				}
+			}
 		})
 
 		const { code, ...restResponse } = SuccessOk({

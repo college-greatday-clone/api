@@ -40,7 +40,12 @@ export class AttendanceControllerV1 {
 				let attendance
 
 				const firstAttendance = await db.attendance.findFirst({
-					where: { companyUserId: companyUser.id, clockIn: undefined }
+					where: {
+						companyUserId: companyUser.id,
+						clockIn: {
+							gte: getToday()
+						}
+					}
 				})
 				if (!firstAttendance) {
 					attendance = await db.attendance.create({

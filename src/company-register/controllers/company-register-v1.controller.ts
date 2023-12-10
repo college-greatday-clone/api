@@ -25,7 +25,8 @@ export class CompanyRegisterControllerV1 {
 	_handleCompanyApproval = ({
 		companyId,
 		status,
-		userId
+		userId,
+		requestorId
 	}: THandleCompanyApproval) => {
 		return prisma.$transaction(async transaction => {
 			const company = await transaction.company.update({
@@ -59,7 +60,7 @@ export class CompanyRegisterControllerV1 {
 						isPic: true,
 						phoneNumber: '555',
 						positionId: position.id,
-						userId,
+						userId: requestorId,
 						workingHour: WorkingHourType.EightToFive,
 						workType: WorkType.WorkFromOffice
 					}
@@ -110,7 +111,8 @@ export class CompanyRegisterControllerV1 {
 			const approvalResponse = await this._handleCompanyApproval({
 				companyId,
 				status: CompanyApprovalStatusType.Approved,
-				userId: req.currentUser?.id as string
+				userId: req.currentUser?.id as string,
+				requestorId: company.requestorId
 			})
 
 			const { code, ...restResponse } = SuccessOk({
@@ -133,7 +135,8 @@ export class CompanyRegisterControllerV1 {
 			const approvalResponse = await this._handleCompanyApproval({
 				companyId,
 				status: CompanyApprovalStatusType.Declined,
-				userId: req.currentUser?.id as string
+				userId: req.currentUser?.id as string,
+				requestorId: company.requestorId
 			})
 
 			const { code, ...restResponse } = SuccessOk({

@@ -96,14 +96,14 @@ model CompanyUser {
   id          String          @id @default(uuid())
   workType    WorkType
   workingHour WorkingHourType
-  phoneNumber String
+  phoneNumber String?
   address     String
   isPic       Boolean         @default(false)
   positionId  String
   position    Position        @relation(fields: [positionId], references: [id])
   userId      String
   user        User            @relation(fields: [userId], references: [id])
-  companyId   String          @unique
+  companyId   String
   company     Company         @relation(fields: [companyId], references: [id])
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -113,7 +113,8 @@ model CompanyUser {
 
   // For General User
   companyPersonInCharges CompanyUserPersonInCharge[] @relation("companyUserPersonInCharge")
-  Attendance             Attendance[]
+
+  attendances Attendance[]
 
   @@map("companyUsers")
 }

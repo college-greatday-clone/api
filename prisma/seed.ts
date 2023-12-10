@@ -78,10 +78,8 @@ async function main() {
 			position => position.name === 'Human Resource'
 		) as Position
 
-		await transaction.companyUser.upsert({
-			where: { companyId: greatDayCompany.id },
-			update: {},
-			create: {
+		await transaction.companyUser.create({
+			data: {
 				address: 'Widyatama University',
 				companyId: greatDayCompany.id,
 				isPic: true,

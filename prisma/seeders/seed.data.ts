@@ -6,6 +6,11 @@ export const users = [
 		name: 'Great Day',
 		email: 'greatday@greatdayclone.com',
 		role: RoleType.GreatDayAdmin
+	},
+	{
+		name: 'John Doe',
+		email: 'john@gits.id',
+		role: RoleType.User
 	}
 ]
 
