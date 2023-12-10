@@ -149,7 +149,7 @@ export class AttendanceControllerV1 {
 				const firstAttendance = await db.attendance.findFirst({
 					where: {
 						companyUserId: companyUser.id,
-						clockIn: {
+						createdAt: {
 							gte: getToday()
 						}
 					}
@@ -180,7 +180,7 @@ export class AttendanceControllerV1 {
 				const existedAttendance = await db.attendance.findFirst({
 					where: {
 						companyUserId: companyUser.id,
-						clockIn: {
+						createdAt: {
 							gte: getToday()
 						},
 						NOT: {
@@ -236,8 +236,15 @@ export class AttendanceControllerV1 {
 	}
 
 	approve = {
+		validateInput: [
+			body('remark')
+				.not()
+				.isEmpty()
+				.withMessage('Remark for approve is required')
+		],
 		config: async (req: Request, res: Response) => {
 			const { attendanceApprovalId } = req.params
+			const { remark } = req.body
 
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
@@ -251,7 +258,12 @@ export class AttendanceControllerV1 {
 			const attendance = await prisma.attendanceApproval.findFirst({
 				where: {
 					id: attendanceApprovalId,
-					status: AttendanceApprovalStatusType.Pending,
+					status: {
+						in: [
+							AttendanceApprovalStatusType.Pending,
+							AttendanceApprovalStatusType.Rejected
+						]
+					},
 					attendance: {
 						createdBy: {
 							companyPersonInCharges: {
@@ -265,12 +277,12 @@ export class AttendanceControllerV1 {
 			})
 			if (!attendance)
 				throw new ErrorBadRequest(
-					'Cannot approve attendance outside Pending state or You are not the PIC!'
+					'Approved attendance cannot be updated or You are not the PIC!'
 				)
 
 			const approvedAttendance = await prisma.attendanceApproval.update({
 				where: { id: attendanceApprovalId },
-				data: { status: AttendanceApprovalStatusType.Approved }
+				data: { status: AttendanceApprovalStatusType.Approved, remark }
 			})
 
 			const { code, ...restResponse } = SuccessOk({
@@ -283,8 +295,15 @@ export class AttendanceControllerV1 {
 	}
 
 	reject = {
+		validateInput: [
+			body('remark')
+				.not()
+				.isEmpty()
+				.withMessage('Remark for reject is required')
+		],
 		config: async (req: Request, res: Response) => {
 			const { attendanceApprovalId } = req.params
+			const { remark } = req.body
 
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
@@ -298,7 +317,14 @@ export class AttendanceControllerV1 {
 			const attendance = await prisma.attendanceApproval.findFirst({
 				where: {
 					id: attendanceApprovalId,
-					status: AttendanceApprovalStatusType.Pending,
+					status: {
+						not: {
+							in: [
+								AttendanceApprovalStatusType.Approved,
+								AttendanceApprovalStatusType.Rejected
+							]
+						}
+					},
 					attendance: {
 						createdBy: {
 							companyPersonInCharges: {
@@ -312,12 +338,12 @@ export class AttendanceControllerV1 {
 			})
 			if (!attendance)
 				throw new ErrorBadRequest(
-					'Cannot reject attendance outside Pending state or You are not the PIC!'
+					'Cannot reject attendance that already Approved and Rejected state, or You are not the PIC!'
 				)
 
 			const approvedAttendance = await prisma.attendanceApproval.update({
 				where: { id: attendanceApprovalId },
-				data: { status: AttendanceApprovalStatusType.Rejected }
+				data: { status: AttendanceApprovalStatusType.Rejected, remark }
 			})
 
 			const { code, ...restResponse } = SuccessOk({

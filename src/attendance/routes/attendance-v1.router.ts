@@ -24,8 +24,16 @@ router.patch(
 router.patch(
 	'/approve/:attendanceApprovalId',
 	appAuthMiddleware,
+	approve.validateInput,
+	appValidationMiddleware,
 	approve.config
 )
-router.patch('/reject/:attendanceApprovalId', appAuthMiddleware, reject.config)
+router.patch(
+	'/reject/:attendanceApprovalId',
+	appAuthMiddleware,
+	reject.validateInput,
+	appValidationMiddleware,
+	reject.config
+)
 
 export { router as attendanceV1Routes }
