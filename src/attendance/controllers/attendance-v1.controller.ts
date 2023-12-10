@@ -13,7 +13,12 @@ import {
 import * as runtime from '@prisma/client/runtime/library'
 
 // Errors
-import { ErrorBadRequest, ErrorNotFound, ErrorUnauthorized } from '@/app/errors'
+import {
+	ErrorBadRequest,
+	ErrorNotFound,
+	ErrorUnauthorized,
+	ErrorValidation
+} from '@/app/errors'
 
 // Dayjs
 import dayjs from 'dayjs'
@@ -119,7 +124,7 @@ export class AttendanceControllerV1 {
 		],
 		config: async (req: Request, res: Response) => {
 			const userId = req.currentUser?.id as string
-			const { date, photo } = req.body
+			const { date, photo, remark } = req.body
 
 			const transaction = await prisma.$transaction(async db => {
 				const companyUser = await db.companyUser.findFirst({
@@ -185,6 +190,17 @@ export class AttendanceControllerV1 {
 					}
 				})
 				if (existedAttendance) {
+					if (!remark)
+						throw new ErrorValidation([
+							{
+								msg: 'Clock Out Remark is required',
+								type: 'field',
+								path: 'remark',
+								location: 'body',
+								value: ''
+							}
+						])
+
 					const attendance = await db.attendance.update({
 						where: { id: existedAttendance.id },
 						data: {
@@ -195,6 +211,7 @@ export class AttendanceControllerV1 {
 							),
 							clockOut: dayjs(date).toISOString(),
 							clockOutPhoto: photo,
+							clockOutRemark: remark,
 							userId
 						}
 					})

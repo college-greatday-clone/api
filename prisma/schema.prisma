@@ -152,6 +152,7 @@ model Attendance {
   clockInPhoto        String?
   isLateClockOut      Boolean              @default(false)
   clockOutPhoto       String?
+  clockOutRemark      String?
   companyUserId       String
   createdBy           CompanyUser          @relation(fields: [companyUserId], references: [id])
   createdAt           DateTime             @default(now())
