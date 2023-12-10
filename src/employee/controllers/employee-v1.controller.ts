@@ -8,7 +8,7 @@ import { SuccessOk } from '@/app/utils/success.util'
 import { PrismaClient, RoleType, Prisma } from '@prisma/client'
 
 // Errors
-import { ErrorBadRequest, ErrorForbidden, ErrorNotFound } from '@/app/errors'
+import { ErrorBadRequest, ErrorForbidden } from '@/app/errors'
 
 // Express Validator
 import { body } from 'express-validator'
@@ -35,7 +35,8 @@ export class EmployeeControllerV1 {
 				position: true
 			}
 		})
-		if (!authenticatedUser) throw new ErrorNotFound('Account cannot be found')
+		if (!authenticatedUser)
+			throw new ErrorForbidden('You are not Human Resource!')
 		if (
 			authenticatedUser &&
 			authenticatedUser.position.name !== 'Human Resource'

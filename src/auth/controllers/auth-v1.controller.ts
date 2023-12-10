@@ -258,8 +258,48 @@ export class AuthControllerV1 {
 								name: true
 							}
 						},
-						companyUserControls: true,
-						companyPersonInCharges: true
+						companyUserControls: {
+							select: {
+								companyUser: {
+									select: {
+										id: true,
+										position: {
+											select: {
+												id: true,
+												name: true
+											}
+										},
+										user: {
+											select: {
+												id: true,
+												name: true
+											}
+										}
+									}
+								}
+							}
+						},
+						companyPersonInCharges: {
+							select: {
+								companyUserPersonInCharge: {
+									select: {
+										id: true,
+										position: {
+											select: {
+												id: true,
+												name: true
+											}
+										},
+										user: {
+											select: {
+												id: true,
+												name: true
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}

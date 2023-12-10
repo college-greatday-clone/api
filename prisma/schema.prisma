@@ -109,10 +109,10 @@ model CompanyUser {
   updatedAt   DateTime        @updatedAt
 
   // For PiC
-  companyUserControls CompanyUserPersonInCharge[] @relation("companyUserControl")
+  companyUserControls CompanyUserPersonInCharge[] @relation("companyUserPersonInCharge")
 
   // For General User
-  companyPersonInCharges CompanyUserPersonInCharge[] @relation("companyUserPersonInCharge")
+  companyPersonInCharges CompanyUserPersonInCharge[] @relation("companyUserControl")
 
   attendances Attendance[]
 
@@ -149,7 +149,9 @@ model Attendance {
   clockIn             DateTime
   clockOut            DateTime?
   isLateClockIn       Boolean              @default(false)
+  clockInPhoto        String?
   isLateClockOut      Boolean              @default(false)
+  clockOutPhoto       String?
   companyUserId       String
   createdBy           CompanyUser          @relation(fields: [companyUserId], references: [id])
   createdAt           DateTime             @default(now())
