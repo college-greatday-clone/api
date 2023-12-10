@@ -14,9 +14,9 @@ class ErrorValidation extends ErrorBase {
 	}
 
 	serializeErrors(): ISerializeErrorResponse[] {
-		return this.errors.map(({ msg, type }) => ({
+		return this.errors.map(({ msg, ...rest }) => ({
 			message: msg,
-			field: type
+			...rest
 		}))
 	}
 }

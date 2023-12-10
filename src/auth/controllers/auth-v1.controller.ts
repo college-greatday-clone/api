@@ -12,7 +12,7 @@ import { Request, Response } from 'express'
 import { body } from 'express-validator'
 
 // Responses
-import { SuccessOk, SuccessCreated } from '@/app/success/success'
+import { SuccessOk, SuccessCreated } from '@/app/utils/success.util'
 
 // Bcrypt
 import bcrypt from 'bcryptjs'
@@ -24,7 +24,11 @@ import { ErrorBadRequest } from '@/app/errors'
 import omit from 'lodash.omit'
 
 // Prisma
-import { PrismaClient, RoleType } from '@prisma/client'
+import {
+	CompanyApprovalStatusType,
+	PrismaClient,
+	RoleType
+} from '@prisma/client'
 
 // Init Prisma
 const prisma = new PrismaClient()
@@ -39,15 +43,36 @@ export class AuthControllerV1 {
 	 */
 	register = {
 		validateInput: [
-			body('name').not().isEmpty().withMessage('Name is required'),
-			body('email').isEmail().withMessage('Email must be valid'),
-			body('password')
+			body('user.name').not().isEmpty().withMessage('Name is required'),
+			body('user.email').isEmail().withMessage('Email must be valid'),
+			body('user.password')
 				.isLength({ min: 8 })
-				.withMessage('Password minimal length must 8')
+				.withMessage('Password minimal length must 8'),
+			body('company.name')
+				.not()
+				.isEmpty()
+				.withMessage('Company name is required'),
+			body('company.phoneNumber')
+				.not()
+				.isEmpty()
+				.withMessage('Company phone number is required'),
+			body('company.capacity')
+				.not()
+				.isEmpty()
+				.withMessage('Company capacity is required'),
+			body('company.city')
+				.not()
+				.isEmpty()
+				.withMessage('Company city is required')
 		],
 		config: async (req: Request, res: Response) => {
-			const { name, password } = req.body
-			let { email } = req.body
+			const {
+				user: { name, password },
+				company: { name: companyName, phoneNumber, capacity, city }
+			} = req.body
+			let {
+				user: { email }
+			} = req.body
 
 			email = email.replace(/\s+/, '').trim().toLowerCase()
 
@@ -57,18 +82,69 @@ export class AuthControllerV1 {
 			})
 			if (existedUser) throw new ErrorBadRequest('Email currently in used')
 
+			// Check if company exists
+			const companyDetail = await prisma.company.findFirst({
+				where: { name: companyName.toLowerCase().trim() }
+			})
+
+			if (companyDetail)
+				throw new ErrorBadRequest(
+					`${companyName} is already registered in our system, please use different company name`
+				)
+
 			// Hash password
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
 
-			// Create new user
-			const user = await prisma.user.create({
-				data: { name, email, password: hashedPassword, role: RoleType.Public }
-			})
+			/**
+			 * @description Create user with company, and also approval
+			 *
+			 */
+			const registerUserWithCompany = () => {
+				return prisma.$transaction(async transaction => {
+					const user = await transaction.user.create({
+						data: {
+							name,
+							email,
+							password: hashedPassword,
+							role: RoleType.Public
+						}
+					})
+
+					const company = await transaction.company.create({
+						data: {
+							name: companyName,
+							phoneNumber,
+							capacity,
+							city,
+							code: `C-${companyName}`,
+							email,
+							status: CompanyApprovalStatusType.Pending,
+							requestorId: user.id
+						}
+					})
+
+					const companyApproval = await transaction.companyApprovalLogs.create({
+						data: {
+							status: CompanyApprovalStatusType.Pending,
+							companyId: company.id,
+							createdById: user.id
+						}
+					})
+
+					return {
+						user: omit(user, ['password']),
+						company,
+						companyApproval
+					}
+				})
+			}
+
+			const registerUserWithCompanyResponse = await registerUserWithCompany()
 
 			const { code, ...restResponse } = SuccessCreated({
 				message: 'You successfully registered',
-				result: omit(user, ['password'])
+				result: omit(registerUserWithCompanyResponse, ['user.password'])
 			})
 			return res.status(code).json(restResponse)
 		}
