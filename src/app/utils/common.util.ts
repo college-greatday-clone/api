@@ -4,7 +4,20 @@ import { AttendanceType, WorkingHourType } from '@prisma/client'
 // Dayjs
 import dayjs from 'dayjs'
 
-export const getToday = () => dayjs().startOf('day').toDate()
+// Types
+import { TGetTodayAttrs } from './common.util.type'
+
+export const getToday = (
+	{ type, options }: TGetTodayAttrs = { type: 'none', options: undefined }
+) => {
+	let today = dayjs().startOf('day')
+
+	if (type === 'subtract') {
+		today = today.subtract(options.subtract, options.manipulateType)
+	}
+
+	return today.toDate()
+}
 
 export const isPastHour = (
 	date: string,

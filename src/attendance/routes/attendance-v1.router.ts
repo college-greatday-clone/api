@@ -11,9 +11,12 @@ import { appValidationMiddleware } from '@/app/middlewares/app-validation.middle
 // Initialize anything
 const router = Router()
 const attendanceControllerV1 = new AttendanceControllerV1()
-const { approvalList, attend, approve, reject } = attendanceControllerV1
+const { list, approvalList, selfAttendance, attend, approve, reject } =
+	attendanceControllerV1
 
-router.get('/', appAuthMiddleware, approvalList.config)
+router.get('/', appAuthMiddleware, list.config)
+router.get('/approval', appAuthMiddleware, approvalList.config)
+router.get('/self', appAuthMiddleware, selfAttendance.config)
 router.patch(
 	'/attend',
 	appAuthMiddleware,

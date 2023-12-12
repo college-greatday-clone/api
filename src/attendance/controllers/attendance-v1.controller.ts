@@ -33,6 +33,63 @@ import { body } from 'express-validator'
 const prisma = new PrismaClient()
 
 export class AttendanceControllerV1 {
+	list = {
+		config: async (req: Request, res: Response) => {
+			const authenticatedUser = await prisma.companyUser.findFirst({
+				where: {
+					userId: req.currentUser?.id as string,
+					company: { name: 'PT GITS Indonesia' }
+				}
+			})
+			if (!authenticatedUser) throw new ErrorUnauthorized('Account not found!')
+
+			const attendanceList = await prisma.attendance.findMany({
+				where: { companyUserId: authenticatedUser.id }
+			})
+
+			const { code, ...restResponse } = SuccessOk({
+				message: `You successfully get attendance list`,
+				result: attendanceList
+			})
+
+			return res.status(code).json(restResponse)
+		}
+	}
+
+	selfAttendance = {
+		config: async (req: Request, res: Response) => {
+			const authenticatedUser = await prisma.companyUser.findFirst({
+				where: {
+					userId: req.currentUser?.id as string,
+					company: { name: 'PT GITS Indonesia' }
+				}
+			})
+			if (!authenticatedUser) throw new ErrorUnauthorized('Account not found!')
+
+			const attendanceList = await prisma.attendance.findMany({
+				where: {
+					companyUserId: authenticatedUser.id,
+					createdAt: {
+						gte: getToday({
+							type: 'subtract',
+							options: { subtract: 1, manipulateType: 'day' }
+						})
+					}
+				},
+				orderBy: {
+					createdAt: 'desc'
+				}
+			})
+
+			const { code, ...restResponse } = SuccessOk({
+				message: `You successfully get self attendance`,
+				result: attendanceList
+			})
+
+			return res.status(code).json(restResponse)
+		}
+	}
+
 	approvalList = {
 		config: async (req: Request, res: Response) => {
 			const authenticatedUser = await prisma.companyUser.findFirst({
@@ -139,6 +196,9 @@ export class AttendanceControllerV1 {
 							NOT: {
 								clockIn: undefined,
 								clockOut: null
+							},
+							createdAt: {
+								gte: getToday()
 							}
 						}
 					}
