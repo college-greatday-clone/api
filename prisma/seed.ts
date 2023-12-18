@@ -21,6 +21,14 @@ import { companies, positions, users } from './seeders/seed.data'
 // Init Prisma
 const prisma = new PrismaClient()
 
+type TGenerateCompanyUser = {
+	companyId: string
+	positionId: string
+	userId: string
+	isPic: boolean
+	pic?: string[]
+}
+
 async function main() {
 	return prisma.$transaction(async transaction => {
 		const salt = await bcrypt.genSalt(10)
@@ -43,6 +51,12 @@ async function main() {
 		}
 
 		const hrUser = createdUsers.find(user => user.name === 'Great Day') as User
+		const hrGitsUser = createdUsers.find(
+			user => user.name === 'GITS HR'
+		) as User
+		const hudaGitsUser = createdUsers.find(
+			user => user.name === 'GITS Huda'
+		) as User
 
 		for (const company of companies) {
 			const companyResponse = await transaction.company.upsert({
@@ -61,6 +75,9 @@ async function main() {
 		const greatDayCompany = createdCompanies.find(
 			company => company.name === 'PT Great Day'
 		) as Company
+		const gitsCompany = createdCompanies.find(
+			company => company.name === 'PT GITS Indonesia'
+		) as Company
 
 		for (const position of positions) {
 			const positionResponse = await transaction.position.upsert({
@@ -77,21 +94,49 @@ async function main() {
 		const hrPosition = createdPositions.find(
 			position => position.name === 'Human Resource'
 		) as Position
+		const frontEndPosition = createdPositions.find(
+			position => position.name === 'Front-End'
+		) as Position
 
-		await transaction.companyUser.create({
-			data: {
-				address: 'Widyatama University',
+		const companyUsers: TGenerateCompanyUser[] = [
+			{
 				companyId: greatDayCompany.id,
-				isPic: true,
-				phoneNumber: '555',
 				positionId: hrPosition.id,
 				userId: hrUser.id,
-				workingHour: WorkingHourType.EightToFive,
-				workType: WorkType.WorkFromOffice
+				isPic: true
+			},
+			{
+				companyId: gitsCompany.id,
+				positionId: hrPosition.id,
+				userId: hrGitsUser.id,
+				isPic: true
+			},
+			{
+				companyId: gitsCompany.id,
+				positionId: frontEndPosition.id,
+				userId: hudaGitsUser.id,
+				isPic: false
 			}
-		})
+		]
+
+		for (const companyUser of companyUsers) {
+			await transaction.companyUser.create({
+				data: {
+					address: 'Bandung',
+					companyId: companyUser.companyId,
+					isPic: companyUser.isPic,
+					phoneNumber: '555',
+					positionId: companyUser.positionId,
+					userId: companyUser.userId,
+					workingHour: WorkingHourType.EightToFive,
+					workType: WorkType.WorkFromOffice,
+					isActive: true
+				}
+			})
+		}
 	})
 }
+
 main()
 	.then(async () => {
 		await prisma.$disconnect()

@@ -11,7 +11,7 @@ import { appValidationMiddleware } from '@/app/middlewares/app-validation.middle
 // Initialize anything
 const router = Router()
 const authControllerV1 = new AuthControllerV1()
-const { register, login, refreshToken, me } = authControllerV1
+const { register, login, refreshToken, me, companyUsers } = authControllerV1
 
 router.post(
 	'/register',
@@ -32,5 +32,6 @@ router.post(
 	refreshToken.config
 )
 router.get('/me', appAuthMiddleware, me)
+router.get('/companies', companyUsers)
 
 export { router as authV1Routes }

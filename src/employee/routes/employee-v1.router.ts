@@ -11,7 +11,7 @@ import { appValidationMiddleware } from '@/app/middlewares/app-validation.middle
 // Initialize anything
 const router = Router()
 const employeeControllerV1 = new EmployeeControllerV1()
-const { index, store } = employeeControllerV1
+const { index, store, update, employeePicList } = employeeControllerV1
 
 router.get('/', appAuthMiddleware, index.config)
 router.post(
@@ -20,6 +20,14 @@ router.post(
 	store.validateInput,
 	appValidationMiddleware,
 	store.config
+)
+router.get('/company-user/pic', appAuthMiddleware, employeePicList)
+router.patch(
+	'/company-user/:id',
+	appAuthMiddleware,
+	update.validateInput,
+	appValidationMiddleware,
+	update.config
 )
 
 export { router as employeeV1Routes }

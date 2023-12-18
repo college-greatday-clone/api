@@ -17,13 +17,13 @@ CREATE TYPE "WorkType" AS ENUM ('WorkFromHome', 'WorkFromOffice');
 CREATE TYPE "WorkingHourType" AS ENUM ('EightToFive', 'NineToEight');
 
 -- CreateTable
-CREATE TABLE "Position" (
+CREATE TABLE "positions" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Position_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "positions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -49,6 +49,7 @@ CREATE TABLE "companies" (
     "capacity" INTEGER NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "requestorId" TEXT NOT NULL,
+    "status" "CompanyApprovalStatusType" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -60,12 +61,13 @@ CREATE TABLE "companyUsers" (
     "id" TEXT NOT NULL,
     "workType" "WorkType" NOT NULL,
     "workingHour" "WorkingHourType" NOT NULL,
-    "phoneNumber" TEXT NOT NULL,
+    "phoneNumber" TEXT,
     "address" TEXT NOT NULL,
     "isPic" BOOLEAN NOT NULL DEFAULT false,
     "positionId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -85,7 +87,7 @@ CREATE TABLE "companyUserPersonInCharges" (
 -- CreateTable
 CREATE TABLE "companyApprovalLogs" (
     "id" TEXT NOT NULL,
-    "status" "CompanyApprovalStatusType",
+    "status" "CompanyApprovalStatusType" NOT NULL,
     "files" JSONB NOT NULL DEFAULT '[]',
     "remark" TEXT,
     "companyId" TEXT NOT NULL,
@@ -101,7 +103,10 @@ CREATE TABLE "attendances" (
     "clockIn" TIMESTAMP(3) NOT NULL,
     "clockOut" TIMESTAMP(3),
     "isLateClockIn" BOOLEAN NOT NULL DEFAULT false,
+    "clockInPhoto" TEXT,
     "isLateClockOut" BOOLEAN NOT NULL DEFAULT false,
+    "clockOutPhoto" TEXT,
+    "clockOutRemark" TEXT,
     "companyUserId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userId" TEXT,
@@ -114,6 +119,7 @@ CREATE TABLE "attendanceApprovals" (
     "id" TEXT NOT NULL,
     "attendanceId" TEXT NOT NULL,
     "type" "AttendanceType" NOT NULL,
+    "remark" TEXT,
     "status" "AttendanceApprovalStatusType" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -121,7 +127,13 @@ CREATE TABLE "attendanceApprovals" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "positions_name_key" ON "positions"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "companies_name_key" ON "companies"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "companies_code_key" ON "companies"("code");
@@ -133,7 +145,7 @@ CREATE UNIQUE INDEX "companies_email_key" ON "companies"("email");
 ALTER TABLE "companies" ADD CONSTRAINT "companies_requestorId_fkey" FOREIGN KEY ("requestorId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "companyUsers" ADD CONSTRAINT "companyUsers_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "Position"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "companyUsers" ADD CONSTRAINT "companyUsers_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "positions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "companyUsers" ADD CONSTRAINT "companyUsers_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

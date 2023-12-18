@@ -35,16 +35,31 @@ const prisma = new PrismaClient()
 export class AttendanceControllerV1 {
 	list = {
 		config: async (req: Request, res: Response) => {
+			const { clockIn } = req.query
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
 					userId: req.currentUser?.id as string,
-					company: { name: 'PT GITS Indonesia' }
+					isActive: true
 				}
 			})
 			if (!authenticatedUser) throw new ErrorUnauthorized('Account not found!')
 
 			const attendanceList = await prisma.attendance.findMany({
-				where: { companyUserId: authenticatedUser.id }
+				where: {
+					companyUserId: authenticatedUser.id,
+					clockIn: {
+						gte:
+							typeof clockIn === 'string'
+								? getToday({
+										type: 'subtract',
+										options: {
+											subtract: Number(clockIn) as unknown as number,
+											manipulateType: 'day'
+										}
+								  })
+								: undefined
+					}
+				}
 			})
 
 			const { code, ...restResponse } = SuccessOk({
@@ -61,7 +76,7 @@ export class AttendanceControllerV1 {
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
 					userId: req.currentUser?.id as string,
-					company: { name: 'PT GITS Indonesia' }
+					isActive: true
 				}
 			})
 			if (!authenticatedUser) throw new ErrorUnauthorized('Account not found!')
@@ -95,7 +110,7 @@ export class AttendanceControllerV1 {
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
 					userId: req.currentUser?.id as string,
-					company: { name: 'PT GITS Indonesia' }
+					isActive: true
 				},
 				include: { companyUserControls: true }
 			})
@@ -185,9 +200,12 @@ export class AttendanceControllerV1 {
 
 			const transaction = await prisma.$transaction(async db => {
 				const companyUser = await db.companyUser.findFirst({
-					where: { userId }
+					where: { userId, isActive: true }
 				})
-				if (!companyUser) throw new ErrorNotFound(`User not registered!`)
+				if (!companyUser)
+					throw new ErrorNotFound(
+						`User not registered or not registered to some company!`
+					)
 
 				const fullAttendance = await db.attendance.findFirst({
 					where: {
@@ -309,7 +327,7 @@ export class AttendanceControllerV1 {
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
 					userId: req.currentUser?.id as string,
-					company: { name: 'PT GITS Indonesia' }
+					isActive: true
 				},
 				include: { companyUserControls: true }
 			})
@@ -368,7 +386,7 @@ export class AttendanceControllerV1 {
 			const authenticatedUser = await prisma.companyUser.findFirst({
 				where: {
 					userId: req.currentUser?.id as string,
-					company: { name: 'PT GITS Indonesia' }
+					isActive: true
 				},
 				include: { companyUserControls: true }
 			})

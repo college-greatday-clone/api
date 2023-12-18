@@ -62,7 +62,8 @@ export class CompanyRegisterControllerV1 {
 						positionId: position.id,
 						userId: requestorId,
 						workingHour: WorkingHourType.EightToFive,
-						workType: WorkType.WorkFromOffice
+						workType: WorkType.WorkFromOffice,
+						isActive: false
 					}
 				})
 			}

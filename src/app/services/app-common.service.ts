@@ -1,17 +1,11 @@
 // Types
-import {
-	TAppCommonService,
-	TPagination,
-	TPaginationArgsReturn,
-	TGetAuthenticatedUserActiveRole
-} from './app-common.service.type'
+import { TPagination, TPaginationArgsReturn } from './app-common.service.type'
 
 // Bcrypt
 import bcrypt from 'bcryptjs'
 
 // Prisma
 import { PrismaClient } from '@prisma/client'
-import type { User } from '@prisma/client'
 
 // Errors
 import { ErrorNotFound } from '@/app/errors'
@@ -22,7 +16,7 @@ import { Request } from 'express'
 // Init Prisma
 const prisma = new PrismaClient()
 
-export class AppCommonService implements TAppCommonService {
+export class AppCommonService {
 	/**
 	 * @description Hash password
 	 *
@@ -124,51 +118,12 @@ export class AppCommonService implements TAppCommonService {
 	 *
 	 * @param {string} userId
 	 *
-	 * @return {Prisma.Prisma__UserClient<User | null, null>} Prisma.Prisma__UserClient<User | null, null>
 	 */
-	getAuthenticatedUser = async (userId: string): Promise<User> => {
+	getAuthenticatedUser = async (userId: string) => {
 		const user = await prisma.user.findFirst({ where: { id: userId } })
 
 		if (!user) throw new ErrorNotFound('User not found')
 
 		return user
-	}
-
-	/**
-	 * @description Get active role of user
-	 *
-	 * @param {string} userId
-	 *
-	 * @return {TGetAuthenticatedUserActiveRole} TGetAuthenticatedUserActiveRole
-	 */
-	getAuthenticatedUserActiveRole = async (
-		userId: string
-	): Promise<TGetAuthenticatedUserActiveRole> => {
-		const user = await prisma.roleUser.findFirst({
-			where: { userId, isActive: true },
-			select: { role: { select: { id: true, name: true } } }
-		})
-
-		if (!user) throw new ErrorNotFound('User not found')
-
-		return user.role
-	}
-
-	/**
-	 * @description Get active role is admin
-	 *
-	 * @param {string} userId
-	 *
-	 * @return {Promise<boolean>} Promise<boolean>
-	 */
-	isAuthenticatedUserAdmin = async (userId: string): Promise<boolean> => {
-		const user = await prisma.roleUser.findFirst({
-			where: { userId, isActive: true },
-			select: { role: { select: { id: true, name: true } } }
-		})
-
-		if (!user) throw new ErrorNotFound('User not found')
-
-		return user.role.name.toLowerCase() === 'admin'
 	}
 }

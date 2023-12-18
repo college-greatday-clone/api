@@ -105,6 +105,7 @@ model CompanyUser {
   user        User            @relation(fields: [userId], references: [id])
   companyId   String
   company     Company         @relation(fields: [companyId], references: [id])
+  isActive    Boolean
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

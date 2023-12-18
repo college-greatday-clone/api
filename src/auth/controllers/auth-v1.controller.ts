@@ -26,6 +26,7 @@ import omit from 'lodash.omit'
 // Prisma
 import {
 	CompanyApprovalStatusType,
+	CompanyUser,
 	PrismaClient,
 	RoleType
 } from '@prisma/client'
@@ -157,18 +158,66 @@ export class AuthControllerV1 {
 	login = {
 		validateInput: [
 			body('email').isEmail().withMessage('Email must be valid'),
-			body('password').not().isEmpty().withMessage('Password is required')
+			body('password').not().isEmpty().withMessage('Password is required'),
+			body('companyId').not().isEmpty().withMessage('Company is required')
 		],
 		config: async (req: Request, res: Response) => {
-			const { email, password } = req.body
+			const { email, password, companyId } = req.body
 
 			// Find correct user
-			const user = await prisma.user.findFirst({ where: { email } })
+			const user = await prisma.user.findFirst({
+				where: { email },
+				include: { companyUsers: true }
+			})
 			if (!user) throw new ErrorBadRequest('Invalid credentials')
 
 			// Verify user password
 			const isPasswordCorrect = await bcrypt.compare(password, user.password)
 			if (!isPasswordCorrect) throw new ErrorBadRequest('Invalid credentials')
+
+			// Check if users have company
+			if (user.companyUsers.length === 0)
+				throw new ErrorBadRequest(
+					`You not registered to company, please contact your HR!`
+				)
+
+			// Update specific user company
+			await prisma.$transaction(async db => {
+				const selectedCompany = user.companyUsers.find(
+					companyUser =>
+						companyUser.companyId === companyId &&
+						companyUser.userId === user.id
+				)
+				const unSelectedCompany = user.companyUsers.filter(
+					companyUser =>
+						companyUser.companyId !== companyId &&
+						companyUser.userId === user.id
+				) as CompanyUser[]
+
+				// Check if company not exists
+				if (!selectedCompany)
+					throw new ErrorBadRequest('You not registered to that company!')
+
+				// Make selected company to be active
+				if (selectedCompany) {
+					await db.companyUser.update({
+						where: { id: selectedCompany.id },
+						data: {
+							isActive: true
+						}
+					})
+				}
+
+				// Make unselected company to be inactive
+				if (unSelectedCompany.length > 0) {
+					await db.companyUser.updateMany({
+						where: {
+							id: { in: unSelectedCompany.map(companyUser => companyUser.id) }
+						},
+						data: { isActive: false }
+					})
+				}
+			})
 
 			// Generate JWT token
 			const jwtPayload = { id: user.id }
@@ -307,6 +356,33 @@ export class AuthControllerV1 {
 
 		const { code, ...restResponse } = SuccessOk({
 			result: omit(user, ['password'])
+		})
+		return res.status(code).json(restResponse)
+	}
+
+	/**
+	 * @description Get company users
+	 *
+	 */
+	companyUsers = async (req: Request, res: Response) => {
+		const { email } = req.query
+
+		if (!email) throw new ErrorBadRequest('Email is required')
+
+		const userCompanies = (
+			await prisma.companyUser.findMany({
+				where: { user: { email: email as unknown as string } },
+				include: { company: true }
+			})
+		).map(({ company: { id, name, code } }) => ({
+			id,
+			name,
+			code
+		}))
+
+		const { code, ...restResponse } = SuccessCreated({
+			message: `You successfully get company users for ${email}`,
+			result: userCompanies
 		})
 		return res.status(code).json(restResponse)
 	}
