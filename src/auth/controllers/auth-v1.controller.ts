@@ -85,7 +85,12 @@ export class AuthControllerV1 {
 
 			// Check if company exists
 			const companyDetail = await prisma.company.findFirst({
-				where: { name: companyName.toLowerCase().trim() }
+				where: {
+					name: {
+						contains: companyName.toLowerCase().trim(),
+						mode: 'insensitive'
+					}
+				}
 			})
 
 			if (companyDetail)

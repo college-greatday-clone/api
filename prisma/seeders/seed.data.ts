@@ -34,7 +34,7 @@ export const positions = [
 
 export const companies = [
 	{
-		capacity: 100,
+		capacity: '10-50',
 		city: 'Jakarta',
 		code: 'C-Great-Day',
 		name: 'PT Great Day',
@@ -42,7 +42,7 @@ export const companies = [
 		phoneNumber: '555'
 	},
 	{
-		capacity: 100,
+		capacity: '10-50',
 		city: 'Bandung',
 		code: 'C-GITS',
 		name: 'PT GITS Indonesia',

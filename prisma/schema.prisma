@@ -79,7 +79,7 @@ model Company {
   code                String                    @unique
   city                String
   email               String                    @unique
-  capacity            Int
+  capacity            String
   phoneNumber         String
   requestorId         String
   requestor           User                      @relation(fields: [requestorId], references: [id])

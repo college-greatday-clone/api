@@ -8,7 +8,11 @@ import { SuccessOk } from '@/app/utils/success.util'
 import { PrismaClient, RoleType, Prisma } from '@prisma/client'
 
 // Errors
-import { ErrorBadRequest, ErrorForbidden } from '@/app/errors'
+import {
+	ErrorBadRequest,
+	ErrorForbidden,
+	ErrorUnauthorized
+} from '@/app/errors'
 
 // Express Validator
 import { body } from 'express-validator'
@@ -49,8 +53,16 @@ export class EmployeeControllerV1 {
 	}
 
 	employeePicList = async (req: Request, res: Response) => {
+		const authenticatedUser = await prisma.companyUser.findFirst({
+			where: {
+				userId: req.currentUser?.id as string,
+				isActive: true
+			}
+		})
+		if (!authenticatedUser) throw new ErrorUnauthorized('Account not found!')
+
 		const picList = await prisma.companyUser.findMany({
-			where: { isPic: true },
+			where: { isPic: true, companyId: authenticatedUser.companyId },
 			select: {
 				id: true,
 				position: {
@@ -64,6 +76,14 @@ export class EmployeeControllerV1 {
 						id: true,
 						name: true,
 						email: true
+					}
+				},
+				company: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+						code: true
 					}
 				}
 			}
@@ -371,7 +391,7 @@ export class EmployeeControllerV1 {
 			const transactionResponse = await transaction
 
 			const { code, ...restResponse } = SuccessOk({
-				message: 'Successfully update PIC for employee',
+				message: 'Successfully update employee',
 				result: transactionResponse
 			})
 			return res.status(code).json(restResponse)
