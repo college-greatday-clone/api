@@ -59,6 +59,15 @@ export class AttendanceControllerV1 {
 									})
 								: undefined
 					}
+				},
+				include: {
+					attendanceApprovals: {
+						select: {
+							id: true,
+							type: true,
+							status: true
+						}
+					}
 				}
 			})
 
@@ -127,6 +136,7 @@ export class AttendanceControllerV1 {
 
 			const attendanceApprovalList = await prisma.attendanceApproval.findMany({
 				where: {
+					type: 'ClockIn',
 					attendance: {
 						createdBy: {
 							companyPersonInCharges: {
@@ -136,6 +146,9 @@ export class AttendanceControllerV1 {
 							}
 						}
 					}
+				},
+				orderBy: {
+					createdAt: 'desc'
 				},
 				include: {
 					attendance: {
@@ -302,11 +315,11 @@ export class AttendanceControllerV1 {
 							userId
 						}
 					})
-					await this._handleApprovalLog(
-						db,
-						AttendanceType.ClockOut,
-						attendance.id
-					)
+					// await this._handleApprovalLog(
+					// 	db,
+					// 	AttendanceType.ClockOut,
+					// 	attendance.id
+					// )
 					return { attendance, isClockOut: true }
 				}
 			})
