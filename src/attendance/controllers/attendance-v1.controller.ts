@@ -56,7 +56,7 @@ export class AttendanceControllerV1 {
 											subtract: Number(clockIn) as unknown as number,
 											manipulateType: 'day'
 										}
-								  })
+									})
 								: undefined
 					}
 				}
@@ -93,6 +93,15 @@ export class AttendanceControllerV1 {
 				},
 				orderBy: {
 					createdAt: 'desc'
+				},
+				include: {
+					attendanceApprovals: {
+						select: {
+							id: true,
+							type: true,
+							status: true
+						}
+					}
 				}
 			})
 

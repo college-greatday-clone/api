@@ -300,6 +300,7 @@ export class AuthControllerV1 {
 						phoneNumber: true,
 						address: true,
 						isPic: true,
+						isActive: true,
 						position: {
 							select: {
 								id: true,

@@ -39,5 +39,9 @@ export const isPastHour = (
 		.set('second', 0)
 
 	// Compare the current time with the target time
-	return currentTime.isAfter(targetTime)
+	if (attendanceType === AttendanceType.ClockIn) {
+		return currentTime.isAfter(targetTime)
+	} else {
+		return currentTime.isBefore(targetTime)
+	}
 }
