@@ -8,6 +8,7 @@ import { SuccessOk } from '@/app/utils/success.util'
 import {
 	CompanyApprovalStatusType,
 	PrismaClient,
+	RoleType,
 	WorkType,
 	WorkingHourType
 } from '@prisma/client'
@@ -63,8 +64,13 @@ export class CompanyRegisterControllerV1 {
 						userId: requestorId,
 						workingHour: WorkingHourType.EightToFive,
 						workType: WorkType.WorkFromOffice,
-						isActive: false
+						isActive: true
 					}
+				})
+
+				await transaction.user.update({
+					where: { id: requestorId },
+					data: { role: RoleType.HRManager }
 				})
 			}
 

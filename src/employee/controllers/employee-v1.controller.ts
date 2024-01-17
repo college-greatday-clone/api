@@ -254,7 +254,7 @@ export class EmployeeControllerV1 {
 						userId: user.id,
 						workingHour,
 						workType,
-						isActive: false
+						isActive: true
 					}
 				})
 

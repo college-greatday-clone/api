@@ -159,6 +159,7 @@ model Attendance {
   createdAt           DateTime             @default(now())
   userId              String?
   user                User?                @relation(fields: [userId], references: [id])
+  workType            WorkType?
   attendanceApprovals AttendanceApproval[]
 
   @@map("attendances")

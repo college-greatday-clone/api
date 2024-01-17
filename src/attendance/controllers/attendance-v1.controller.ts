@@ -47,9 +47,9 @@ export class AttendanceControllerV1 {
 			const attendanceList = await prisma.attendance.findMany({
 				where: {
 					companyUserId: authenticatedUser.id,
-					clockIn: {
+					createdAt: {
 						gte:
-							typeof clockIn === 'string'
+							typeof clockIn === 'string' && clockIn !== '0'
 								? getToday({
 										type: 'subtract',
 										options: {
@@ -218,7 +218,7 @@ export class AttendanceControllerV1 {
 		],
 		config: async (req: Request, res: Response) => {
 			const userId = req.currentUser?.id as string
-			const { date, photo, remark } = req.body
+			const { date, photo, workType, remark } = req.body
 
 			const transaction = await prisma.$transaction(async db => {
 				const companyUser = await db.companyUser.findFirst({
@@ -255,6 +255,17 @@ export class AttendanceControllerV1 {
 					}
 				})
 				if (!firstAttendance) {
+					if (!workType)
+						throw new ErrorValidation([
+							{
+								msg: 'Work Type is required',
+								type: 'field',
+								path: 'workType',
+								location: 'body',
+								value: ''
+							}
+						])
+
 					const attendance = await db.attendance.create({
 						data: {
 							isLateClockIn: isPastHour(
@@ -265,6 +276,7 @@ export class AttendanceControllerV1 {
 							clockIn: dayjs(date).toISOString(),
 							companyUserId: companyUser.id,
 							clockInPhoto: photo,
+							workType,
 							userId
 						}
 					})
